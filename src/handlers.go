@@ -39,7 +39,7 @@ func (s *Server) handleregisteruser() http.HandlerFunc {
 		client := &http.Client{}
 		var data = strings.NewReader(`{"schemas":[],"name":{"familyName":"` + regUser.Surname + `" ,"givenName":"` + regUser.Name + `"},"userName":"` + regUser.Username + `","password":"` + regUser.Password + `","emails":[{"primary":true,"value":"` + regUser.Email + `","type":"home"},{"value":"` + regUser.Email + `","type":"work"}]}`)
 
-		req, err := http.NewRequest("POST", "https://wso2is:9445/wso2/scim/Users", data)
+		req, err := http.NewRequest("POST", "https://"+config.IS_Host+":"+config.IS_Port+"/wso2/scim/Users", data)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -143,7 +143,7 @@ func (s *Server) handleregisteruser() http.HandlerFunc {
 
 		if registerResponse.UserCreated == "false" {
 			client := &http.Client{}
-			req, err := http.NewRequest("DELETE", "https://wso2is:9445/wso2/scim/Users/"+identityServerResponse.ID, nil)
+			req, err := http.NewRequest("DELETE", "https://"+config.IS_Host+":"+config.IS_Port+"/wso2/scim/Users/"+identityServerResponse.ID, nil)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -158,6 +158,115 @@ func (s *Server) handleregisteruser() http.HandlerFunc {
 				log.Fatal(err)
 			}
 			fmt.Printf("%s\n", bodyText)
+		}
+
+		//return back to Front-End user
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		w.Write(js)
+
+	}
+}
+
+func (s *Server) handleupdateuser() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		//get JSON payload
+		updateUser := UpdateUser{}
+		err := json.NewDecoder(r.Body).Decode(&updateUser)
+
+		//handle for bad JSON provided
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, err.Error())
+			fmt.Println(err.Error())
+			return
+		}
+
+		client := &http.Client{}
+
+		//create byte array from JSON payload
+		requestByte, _ := json.Marshal(updateUser)
+
+		//put to crud service
+		req, err := http.NewRequest("PUT", "http://"+config.UM_Host+":"+config.UM_Port+"/user", bytes.NewBuffer(requestByte))
+		if err != nil {
+			fmt.Fprint(w, err.Error())
+			fmt.Println(err.Error())
+			return
+		}
+
+		// Fetch Request
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Fprint(w, err.Error())
+			fmt.Println(err.Error())
+			return
+		}
+
+		//close the request
+		defer resp.Body.Close()
+
+		//create new response struct
+		var updateResponse UpdateUserResult
+
+		decoder := json.NewDecoder(resp.Body)
+
+		err = decoder.Decode(&updateResponse)
+
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, err.Error())
+			fmt.Println(err.Error())
+			return
+		}
+
+		//convert struct back to JSON
+		js, jserr := json.Marshal(updateResponse)
+
+		if jserr != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, jserr.Error())
+			fmt.Println(err.Error())
+			return
+		}
+
+		if updateResponse.UserUpdated == true {
+			http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+			// TODO: Set InsecureSkipVerify as config in environment.env
+			client1 := &http.Client{}
+			var data = strings.NewReader(`{"schemas":[],"name":{"familyName":"` + updateUser.Surname + `" ,"givenName":"` + updateUser.Name + `"},"userName":"` + updateUser.Username + `","emails":[{"primary":true,"value":"` + updateUser.Email + `","type":"home"},{"value":"` + updateUser.Email + `","type":"work"}]}`)
+
+			req2, err1 := http.NewRequest("PUT", "https://"+config.IS_Host+":"+config.IS_Port+"/wso2/scim/Users/"+updateUser.ScimID, data)
+			if err != nil {
+				log.Fatal(err)
+			}
+			req2.Header.Set("Content-Type", "application/json")
+			req2.SetBasicAuth("admin", "admin")
+			resp1, err1 := client1.Do(req2)
+			if err1 != nil {
+				log.Fatal(err1)
+			}
+
+			bodyText, err := ioutil.ReadAll(resp1.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			defer resp1.Body.Close()
+
+			var identityServerResponse IdentityServerResponse
+
+			err = json.Unmarshal(bodyText, &identityServerResponse)
+
+			if err != nil {
+				w.WriteHeader(500)
+				fmt.Fprint(w, err.Error())
+				fmt.Println(err.Error())
+				fmt.Println("Error occured in decoding registration response")
+				return
+			}
+
 		}
 
 		//return back to Front-End user

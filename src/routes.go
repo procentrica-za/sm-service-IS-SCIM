@@ -1,6 +1,6 @@
 package main
 
 func (s *Server) routes() {
-	s.router.HandleFunc("/register", s.handleregisteruser()).Methods("POST") // Unit Tested
-
+	s.router.HandleFunc("/register", s.handleregisteruser()).Methods("POST")
+	s.router.HandleFunc("/user", s.handleupdateuser()).Methods("PUT")
 }

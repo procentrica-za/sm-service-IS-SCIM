@@ -24,6 +24,30 @@ type RegisterUserResponse struct {
 	Message     string `json:"message"`
 }
 
+type UpdateUser struct {
+	UserID         string `json:"id"`
+	ScimID         string `json:"scimid"`
+	Username       string `json:"username"`
+	Name           string `json:"name"`
+	Surname        string `json:"surname"`
+	Email          string `json:"email"`
+	InsitutionName string `json:"institutionname"`
+}
+
+type UpdateUserDB struct {
+	UserID         string `json:"id"`
+	Username       string `json:"username"`
+	Name           string `json:"name"`
+	Surname        string `json:"surname"`
+	Email          string `json:"email"`
+	InsitutionName string `json:"institutionname"`
+}
+
+type UpdateUserResult struct {
+	UserUpdated bool   `json:"userupdated"`
+	Message     string `json:"message"`
+}
+
 type Server struct {
 	router *mux.Router
 }
