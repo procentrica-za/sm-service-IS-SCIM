@@ -26,6 +26,14 @@ func (s *Server) handleregisteruser() http.HandlerFunc {
 			return
 		}
 
+		if regUser.KeySecret != config.Key_Secret {
+			keyErrorByte, _ := json.Marshal("Resource accessed without the correct key and secret!")
+			w.WriteHeader(500)
+			w.Write(keyErrorByte)
+			fmt.Println("Resource accessed without the correct key and secret!")
+			return
+		}
+
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 		// TODO: Set InsecureSkipVerify as config in environment.env
 		client := &http.Client{}
@@ -61,8 +69,6 @@ func (s *Server) handleregisteruser() http.HandlerFunc {
 			w.Write(js)
 			return
 		}
-
-		//fmt.Println("Oh shit fam I didn't return??????")
 
 		bodyText, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -136,7 +142,6 @@ func (s *Server) handleregisteruser() http.HandlerFunc {
 		}
 
 		if registerResponse.UserCreated == "false" {
-			//fmt.Println("This is supposed to revert IS because email already exists code this part plz UwU")
 			client := &http.Client{}
 			req, err := http.NewRequest("DELETE", "https://wso2is:9445/wso2/scim/Users/"+identityServerResponse.ID, nil)
 			if err != nil {

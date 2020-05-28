@@ -9,6 +9,7 @@ type RegisterUser struct {
 	Surname        string `json:"surname"`
 	Email          string `json:"email"`
 	InsitutionName string `json:"institutionname"`
+	KeySecret      string `json:"keysecret"`
 }
 
 type IdentityServerResponse struct {
@@ -34,4 +35,5 @@ type Config struct {
 	IS_Password     string
 	UM_Host         string
 	UM_Port         string
+	Key_Secret      string
 }

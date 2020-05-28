@@ -30,6 +30,7 @@ func CreateConfig() Config {
 		IS_Password:     os.Getenv("IS_PASSWORD"),
 		UM_Host:         os.Getenv("UM_HOST"),
 		UM_Port:         os.Getenv("UM_PORT"),
+		Key_Secret:      os.Getenv("KEY_SECRET"),
 	}
 	return conf
 }
