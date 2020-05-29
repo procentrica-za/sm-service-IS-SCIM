@@ -16,6 +16,8 @@ func init() {
 	config = CreateConfig()
 	fmt.Printf("IS_Host: %v\n", config.IS_Host)
 	fmt.Printf("IS_Port: %v\n", config.IS_Port)
+	fmt.Printf("APIM_Host: %v\n", config.IS_Host)
+	fmt.Printf("APIM_Port: %v\n", config.IS_Port)
 	fmt.Printf("Listening and Serving on Port: %v\n", config.ListenServePort)
 	fmt.Printf("UM_Host: %v\n", config.UM_Host)
 	fmt.Printf("UM_Port: %v\n", config.UM_Port)
@@ -25,6 +27,8 @@ func CreateConfig() Config {
 	conf := Config{
 		IS_Host:         os.Getenv("IS_HOST"),
 		IS_Port:         os.Getenv("IS_PORT"),
+		APIM_Host:       os.Getenv("APIM_HOST"),
+		APIM_Port:       os.Getenv("APIM_PORT"),
 		ListenServePort: os.Getenv("LISTEN_AND_SERVE_PORT"),
 		IS_Username:     os.Getenv("IS_USERNAME"),
 		IS_Password:     os.Getenv("IS_PASSWORD"),

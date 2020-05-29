@@ -305,7 +305,7 @@ func (s *Server) handleloginuser() http.HandlerFunc {
 		data.Add("username", username)
 		data.Add("password", password)
 
-		req, err := http.NewRequest("POST", "https://wso2apim:8243/token", bytes.NewBufferString(data.Encode()))
+		req, err := http.NewRequest("POST", "https://"+config.APIM_Host+":"+config.APIM_Port+"/token", bytes.NewBufferString(data.Encode()))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -322,7 +322,6 @@ func (s *Server) handleloginuser() http.HandlerFunc {
 			userExists.Username = "None"
 			userExists.Institution = "None"
 			userExists.UserID = "00000000-0000-0000-0000-000000000000"
-			userExists.ScimID = "00000000-0000-0000-0000-000000000000"
 			userExists.Message = "Incorrect login credentials"
 
 			js, jserr := json.Marshal(userExists)
@@ -342,7 +341,6 @@ func (s *Server) handleloginuser() http.HandlerFunc {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("%s\n", bodyText)
 
 		var identityServerResponse TokenResponse
 

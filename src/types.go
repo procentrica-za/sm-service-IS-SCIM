@@ -55,7 +55,6 @@ type TokenResponse struct {
 
 type LoginUserResult struct {
 	UserID       string `json:"id"`
-	ScimID       string `json:"scimid"`
 	Username     string `json:"username"`
 	UserLoggedIn bool   `json:"userloggedin"`
 	Institution  string `json:"institution"`
@@ -74,6 +73,8 @@ type Server struct {
 type Config struct {
 	IS_Host         string
 	IS_Port         string
+	APIM_Host       string
+	APIM_Port       string
 	ListenServePort string
 	IS_Username     string
 	IS_Password     string
