@@ -417,6 +417,117 @@ func (s *Server) handleloginuser() http.HandlerFunc {
 	}
 }
 
+func (s *Server) handlechangeuserpassword() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Handle Change password with SCIM Has Been Called!")
+
+		updatePassword := UpdatePassword{}
+		err := json.NewDecoder(r.Body).Decode(&updatePassword)
+
+		//handle for bad JSON provided
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, err.Error())
+			return
+		}
+
+		client := &http.Client{}
+
+		//create byte array from JSON payload
+		requestByte, _ := json.Marshal(updatePassword)
+
+		//put to crud service
+		req, err := http.NewRequest("PUT", "http://"+config.UM_Host+":"+config.UM_Port+"/userpassword", bytes.NewBuffer(requestByte))
+		if err != nil {
+			fmt.Fprint(w, err.Error())
+			fmt.Println("Error in communication with CRUD service endpoint for request to update user")
+			return
+		}
+
+		// Fetch Request
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Fprint(w, err.Error())
+			return
+		}
+
+		//close the request
+		defer resp.Body.Close()
+
+		//create new response struct
+		var passwordResponse UpdatePasswordResult
+		decoder := json.NewDecoder(resp.Body)
+		err = decoder.Decode(&passwordResponse)
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, err.Error())
+			return
+		}
+
+		if passwordResponse.PasswordUpdated == false {
+
+			js, jserr := json.Marshal(passwordResponse)
+			if jserr != nil {
+				w.WriteHeader(500)
+				fmt.Fprint(w, jserr.Error())
+				fmt.Println("Error occured when trying to marshal the response to register user when that user already exists.")
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(200)
+			w.Write(js)
+			return
+		}
+
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		// TODO: Set InsecureSkipVerify as config in environment.env
+		client1 := &http.Client{}
+		var data = strings.NewReader(`{"schemas":[],"userName":"` + updatePassword.Username + `","password":"` + updatePassword.Password + `"}`)
+
+		reqtoIS, err := http.NewRequest("PATCH", "https://"+config.IS_Host+":"+config.IS_Port+"/wso2/scim/Users/"+updatePassword.ScimID, data)
+		if err != nil {
+			log.Fatal(err)
+		}
+		reqtoIS.Header.Set("Content-Type", "application/json")
+		reqtoIS.SetBasicAuth("admin", "admin")
+		resp1, err := client1.Do(reqtoIS)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		bodyText, err1 := ioutil.ReadAll(resp1.Body)
+		if err1 != nil {
+			log.Fatal(err1)
+		}
+		fmt.Printf("%s\n", bodyText)
+
+		var identityServerResponse IdentityServerResponse
+
+		err1 = json.Unmarshal(bodyText, &identityServerResponse)
+
+		if err1 != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, err.Error())
+			fmt.Println("Error occured in decoding registration response")
+			return
+		}
+
+		js, jserr := json.Marshal(passwordResponse)
+		if jserr != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, jserr.Error())
+			fmt.Println("Error occured when trying to marshal the response to changing the user password.")
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		w.Write(js)
+		return
+
+	}
+}
+
 /* ========================================================================
 ===========================================================================
 =========================================================================*/

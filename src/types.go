@@ -63,6 +63,19 @@ type LoginUserResult struct {
 	Refreshtoken string `json:"refresh_token"`
 }
 
+type UpdatePassword struct {
+	UserID          string `json:"id"`
+	ScimID          string `json:"scimid"`
+	Username        string `json:"username"`
+	CurrentPassword string `json:"currentpassword"`
+	Password        string `json:"password"`
+}
+
+type UpdatePasswordResult struct {
+	PasswordUpdated bool   `json:"passwordupdated"`
+	Message         string `json:"message"`
+}
+
 type ScimID struct {
 	ScimID string `json:"id"`
 }
