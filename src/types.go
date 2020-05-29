@@ -48,6 +48,26 @@ type UpdateUserResult struct {
 	Message     string `json:"message"`
 }
 
+type TokenResponse struct {
+	Accesstoken  string `json:"access_token"`
+	Refreshtoken string `json:"refresh_token"`
+}
+
+type LoginUserResult struct {
+	UserID       string `json:"id"`
+	ScimID       string `json:"scimid"`
+	Username     string `json:"username"`
+	UserLoggedIn bool   `json:"userloggedin"`
+	Institution  string `json:"institution"`
+	Message      string `json:"message"`
+	Accesstoken  string `json:"access_token"`
+	Refreshtoken string `json:"refresh_token"`
+}
+
+type ScimID struct {
+	ScimID string `json:"id"`
+}
+
 type Server struct {
 	router *mux.Router
 }

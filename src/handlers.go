@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -267,6 +268,147 @@ func (s *Server) handleupdateuser() http.HandlerFunc {
 				return
 			}
 
+		}
+
+		//return back to Front-End user
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		w.Write(js)
+
+	}
+}
+
+func (s *Server) handleloginuser() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Handle Login User in IS with SCIM Has Been Called!")
+
+		username := r.URL.Query().Get("username")
+		password := r.URL.Query().Get("password")
+		if username == "" {
+			w.WriteHeader(500)
+			fmt.Fprint(w, "No username provided in URL")
+			fmt.Println("A username has not been provided in URL")
+			return
+		}
+		if password == "" {
+			w.WriteHeader(500)
+			fmt.Fprint(w, "No password provided in URL")
+			fmt.Println("A password has not been provided in URL")
+			return
+		}
+
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		// TODO: Set InsecureSkipVerify as config in environment.env
+		client := &http.Client{}
+		data := url.Values{}
+		data.Set("grant_type", "password")
+		data.Add("username", username)
+		data.Add("password", password)
+
+		req, err := http.NewRequest("POST", "https://wso2apim:8243/token", bytes.NewBufferString(data.Encode()))
+		if err != nil {
+			log.Fatal(err)
+		}
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Add("Authorization", "Basic UTBPWkc1U0VmdVFFQWxGeFRheDg4bEEycWVrYTpqdVhlUDRKWnJJX0ZXOGxseUFpX2ZudFhDVjBh")
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if resp.StatusCode == 400 {
+			userExists := LoginUserResult{}
+			userExists.UserLoggedIn = false
+			userExists.Username = "None"
+			userExists.Institution = "None"
+			userExists.UserID = "00000000-0000-0000-0000-000000000000"
+			userExists.ScimID = "00000000-0000-0000-0000-000000000000"
+			userExists.Message = "Incorrect login credentials"
+
+			js, jserr := json.Marshal(userExists)
+			if jserr != nil {
+				w.WriteHeader(500)
+				fmt.Fprint(w, jserr.Error())
+				fmt.Println("Error occured when trying to marshal the response to register user when incorrect login details were recieved.")
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(200)
+			w.Write(js)
+			return
+		}
+
+		bodyText, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("%s\n", bodyText)
+
+		var identityServerResponse TokenResponse
+
+		err = json.Unmarshal(bodyText, &identityServerResponse)
+
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, err.Error())
+			fmt.Println("Error occured in decoding registration response")
+			return
+		}
+
+		reqtoUM, respErr := http.Get("http://" + config.UM_Host + ":" + config.UM_Port + "/userlogin?username=" + username + "&password=" + password)
+
+		//check for response error of 500
+		if respErr != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, respErr.Error())
+			fmt.Println("Error in communication with CRUD service endpoint for request to login user")
+			return
+		}
+		if reqtoUM.StatusCode != 200 {
+			fmt.Println("Request to DB can't be completed to login user")
+		}
+		if reqtoUM.StatusCode == 500 {
+			w.WriteHeader(500)
+			bodyBytes, err := ioutil.ReadAll(req.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
+			bodyString := string(bodyBytes)
+			fmt.Fprintf(w, "Database error occured upon retrieval"+bodyString)
+			fmt.Println("Database error occured upon retrieval" + bodyString)
+			return
+		}
+
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, err.Error())
+			fmt.Println("Logging in is not able to be completed by internal error")
+			return
+		}
+
+		//close the request
+		defer reqtoUM.Body.Close()
+		var loginuseresult LoginUserResult
+
+		//decode request into decoder which converts to the struct
+		decoder := json.NewDecoder(reqtoUM.Body)
+
+		loginuseresult.Accesstoken = identityServerResponse.Accesstoken
+		loginuseresult.Refreshtoken = identityServerResponse.Refreshtoken
+
+		err = decoder.Decode(&loginuseresult)
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, err.Error())
+			fmt.Println("Error occured in decoding registration response")
+			return
+		}
+		js, jserr := json.Marshal(loginuseresult)
+		if jserr != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, jserr.Error())
+			fmt.Println("Error occured when trying to marshal the response to register user")
+			return
 		}
 
 		//return back to Front-End user
