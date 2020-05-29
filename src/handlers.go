@@ -36,7 +36,6 @@ func (s *Server) handleregisteruser() http.HandlerFunc {
 		}
 
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-		// TODO: Set InsecureSkipVerify as config in environment.env
 		client := &http.Client{}
 		var data = strings.NewReader(`{"schemas":[],"name":{"familyName":"` + regUser.Surname + `" ,"givenName":"` + regUser.Name + `"},"userName":"` + regUser.Username + `","password":"` + regUser.Password + `","emails":[{"primary":true,"value":"` + regUser.Email + `","type":"home"},{"value":"` + regUser.Email + `","type":"work"}]}`)
 
@@ -496,11 +495,73 @@ func (s *Server) handlechangeuserpassword() http.HandlerFunc {
 			log.Fatal(err)
 		}
 
+		if resp1.StatusCode == 500 {
+			fmt.Println("Password revert to the old one has taken place.")
+			//send new JSON payload
+			revertPassword := UpdatePassword{}
+			revertPassword.UserID = updatePassword.UserID
+			revertPassword.ScimID = updatePassword.ScimID
+			revertPassword.Username = updatePassword.Username
+			revertPassword.CurrentPassword = updatePassword.Password
+			revertPassword.Password = updatePassword.CurrentPassword
+			err := json.NewDecoder(r.Body).Decode(&updatePassword)
+
+			client := &http.Client{}
+
+			//create byte array from JSON payload
+			requestByte, _ := json.Marshal(revertPassword)
+
+			//put to user manager
+			req, err := http.NewRequest("PUT", "http://"+config.UM_Host+":"+config.UM_Port+"/userpassword", bytes.NewBuffer(requestByte))
+			if err != nil {
+				fmt.Fprint(w, err.Error())
+				fmt.Println("Error in communication with CRUD service endpoint for request to update user")
+				return
+			}
+
+			// Fetch Request
+			resp, err := client.Do(req)
+			if err != nil {
+				fmt.Fprint(w, err.Error())
+				return
+			}
+
+			//close the request
+			defer resp.Body.Close()
+
+			var passwordrevert UpdatePasswordResult
+			decoder := json.NewDecoder(resp.Body)
+
+			passwordrevert.PasswordUpdated = false
+			passwordrevert.Message = "An internal error has occured whilst trying to change our password. Please use your old password for now."
+
+			err = decoder.Decode(&passwordResponse)
+			if err != nil {
+				w.WriteHeader(500)
+				fmt.Fprint(w, err.Error())
+				return
+			}
+
+			//convert struct back to JSON
+			js, jserr := json.Marshal(passwordrevert)
+			if jserr != nil {
+				w.WriteHeader(500)
+				fmt.Fprint(w, jserr.Error())
+				fmt.Println("Error occured when trying to marshal the response to revert password for a user")
+				return
+			}
+
+			//return back to Front-End user
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(200)
+			w.Write(js)
+			return
+		}
+
 		bodyText, err1 := ioutil.ReadAll(resp1.Body)
 		if err1 != nil {
 			log.Fatal(err1)
 		}
-		fmt.Printf("%s\n", bodyText)
 
 		var identityServerResponse IdentityServerResponse
 
@@ -526,6 +587,7 @@ func (s *Server) handlechangeuserpassword() http.HandlerFunc {
 		return
 
 	}
+
 }
 
 /* ========================================================================
