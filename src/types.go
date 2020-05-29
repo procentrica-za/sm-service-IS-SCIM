@@ -92,6 +92,10 @@ type EmailResult struct {
 	Password string `json:"password"`
 }
 
+type UserResult struct {
+	Message string `json:"message"`
+}
+
 type Server struct {
 	router *mux.Router
 }
