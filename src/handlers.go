@@ -309,7 +309,7 @@ func (s *Server) handleloginuser() http.HandlerFunc {
 			log.Fatal(err)
 		}
 		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-		req.Header.Add("Authorization", "Basic UTBPWkc1U0VmdVFFQWxGeFRheDg4bEEycWVrYTpqdVhlUDRKWnJJX0ZXOGxseUFpX2ZudFhDVjBh")
+		req.Header.Add("Authorization", "Basic "+config.Key_Secret)
 		resp, err := client.Do(req)
 		if err != nil {
 			log.Fatal(err)
@@ -575,6 +575,133 @@ func (s *Server) handlechangeuserpassword() http.HandlerFunc {
 		}
 
 		js, jserr := json.Marshal(passwordResponse)
+		if jserr != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, jserr.Error())
+			fmt.Println("Error occured when trying to marshal the response to changing the user password.")
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		w.Write(js)
+		return
+
+	}
+
+}
+
+func (s *Server) handleforgotpassword() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Handle forgot password with SCIM Has Been Called!")
+		//get user email from url
+		email := r.URL.Query().Get("email")
+		scimid := r.URL.Query().Get("scimid")
+		//get userID from crud service
+		req, respErr := http.Get("http://" + config.UM_Host + ":" + config.UM_Port + "/password?email=" + email)
+
+		//check for response error of 500
+		if respErr != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, respErr.Error())
+			fmt.Println("Error in communication with CRUD service endpoint for request to retrieve user information")
+			return
+		}
+		if req.StatusCode != 200 {
+			w.WriteHeader(500)
+			fmt.Fprint(w, "Request to DB can't be completed...")
+			fmt.Println("Request to DB can't be completed...")
+		}
+		if req.StatusCode == 500 {
+			w.WriteHeader(500)
+			bodyBytes, err := ioutil.ReadAll(req.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
+			bodyString := string(bodyBytes)
+			fmt.Fprintf(w, "An internal error has occured whilst trying to get user data"+bodyString)
+			fmt.Println("An internal error has occured whilst trying to get user data" + bodyString)
+			return
+		}
+
+		defer req.Body.Close()
+
+		//create new response struct
+		var getResponse getPassword
+		decoder := json.NewDecoder(req.Body)
+		err := decoder.Decode(&getResponse)
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, err.Error())
+			fmt.Println("An internal error has occured whilst trying to decode the get user response")
+			return
+		}
+
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+
+		reqtoUM, err := http.Get("http://" + config.UM_Host + ":" + config.UM_Port + "/forgotpassword?email=" + email)
+		if respErr != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, respErr.Error())
+			fmt.Println("Error in communication with CRUD service endpoint for request to retrieve password reset information")
+			return
+		}
+		if reqtoUM.StatusCode != 200 {
+			w.WriteHeader(reqtoUM.StatusCode)
+			fmt.Fprint(w, "Request to DB can't be completed...")
+			fmt.Println("Request to DB can't be completed...")
+		}
+		if reqtoUM.StatusCode == 500 {
+			w.WriteHeader(500)
+			bodyBytes, err := ioutil.ReadAll(reqtoUM.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
+			bodyString := string(bodyBytes)
+			fmt.Fprintf(w, "An internal error has occured whilst trying to get advertisement data"+bodyString)
+			fmt.Println("An internal error has occured whilst trying to get advertisement data" + bodyString)
+			return
+		}
+
+		//close the request
+		defer reqtoUM.Body.Close()
+
+		var passwordresetresult EmailResult
+
+		//decode request into decoder which converts to the struct
+		decoder1 := json.NewDecoder(reqtoUM.Body)
+		err2 := decoder1.Decode(&passwordresetresult)
+		if err2 != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, err.Error())
+			fmt.Println("Error occured in decoding get Advertisement response ")
+			return
+		}
+
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		// TODO: Set InsecureSkipVerify as config in environment.env
+		client1 := &http.Client{}
+		fmt.Println(getResponse.Username, passwordresetresult.Password)
+		var data = strings.NewReader(`{"schemas":[],"userName":"` + getResponse.Username + `","password":"` + passwordresetresult.Password + `"}`)
+
+		reqtoIS, err := http.NewRequest("PATCH", "https://"+config.IS_Host+":"+config.IS_Port+"/wso2/scim/Users/"+scimid, data)
+		if err != nil {
+			log.Fatal(err)
+		}
+		reqtoIS.Header.Set("Content-Type", "application/json")
+		reqtoIS.SetBasicAuth("admin", "admin")
+		resp1, err := client1.Do(reqtoIS)
+
+		bodyText, err := ioutil.ReadAll(resp1.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("%s\n", bodyText)
+
+		var identityServerResponse IdentityServerResponse
+
+		err = json.Unmarshal(bodyText, &identityServerResponse)
+
+		js, jserr := json.Marshal(passwordresetresult)
 		if jserr != nil {
 			w.WriteHeader(500)
 			fmt.Fprint(w, jserr.Error())

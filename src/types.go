@@ -80,6 +80,18 @@ type ScimID struct {
 	ScimID string `json:"id"`
 }
 
+type getPassword struct {
+	UserID   string `json:"id"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	GotUser  bool   `json:"gotuser"`
+}
+
+type EmailResult struct {
+	Message  string `json:"message"`
+	Password string `json:"password"`
+}
+
 type Server struct {
 	router *mux.Router
 }
