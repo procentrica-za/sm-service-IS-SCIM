@@ -635,6 +635,23 @@ func (s *Server) handleforgotpassword() http.HandlerFunc {
 			fmt.Println("An internal error has occured whilst trying to decode the get user response")
 			return
 		}
+		if getResponse.GotUser == false {
+			var userResponse UserResult
+
+			userResponse.Message = "A new password cannot be granted at this time as an appropriate email address has not been provided"
+
+			js, jserr := json.Marshal(userResponse)
+			if jserr != nil {
+				w.WriteHeader(500)
+				fmt.Fprint(w, jserr.Error())
+				fmt.Println("Error occured when trying to marshal the response to changing the user password.")
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(200)
+			w.Write(js)
+			return
+		}
 
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
