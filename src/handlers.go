@@ -74,7 +74,6 @@ func (s *Server) handleregisteruser() http.HandlerFunc {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("%s\n", bodyText)
 
 		var identityServerResponse IdentityServerResponse
 
