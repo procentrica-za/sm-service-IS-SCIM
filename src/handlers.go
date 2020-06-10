@@ -280,18 +280,15 @@ func (s *Server) handleloginuser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Handle Login User in IS with SCIM Has Been Called!")
 
-		username := r.URL.Query().Get("username")
-		password := r.URL.Query().Get("password")
-		if username == "" {
+		//get JSON payload
+		loginUser := LoginUser{}
+		err := json.NewDecoder(r.Body).Decode(&loginUser)
+
+		//handle for bad JSON provided
+		if err != nil {
 			w.WriteHeader(500)
-			fmt.Fprint(w, "No username provided in URL")
-			fmt.Println("A username has not been provided in URL")
-			return
-		}
-		if password == "" {
-			w.WriteHeader(500)
-			fmt.Fprint(w, "No password provided in URL")
-			fmt.Println("A password has not been provided in URL")
+			fmt.Fprint(w, err.Error())
+			fmt.Println(err.Error())
 			return
 		}
 
@@ -300,8 +297,8 @@ func (s *Server) handleloginuser() http.HandlerFunc {
 		client := &http.Client{}
 		data := url.Values{}
 		data.Set("grant_type", "password")
-		data.Add("username", username)
-		data.Add("password", password)
+		data.Add("username", loginUser.Username)
+		data.Add("password", loginUser.Password)
 
 		req, err := http.NewRequest("POST", "https://"+config.APIM_Host+":"+config.APIM_Port+"/token", bytes.NewBufferString(data.Encode()))
 		if err != nil {
@@ -351,7 +348,7 @@ func (s *Server) handleloginuser() http.HandlerFunc {
 			return
 		}
 
-		reqtoUM, respErr := http.Get("http://" + config.UM_Host + ":" + config.UM_Port + "/userlogin?username=" + username + "&password=" + password)
+		reqtoUM, respErr := http.Get("http://" + config.UM_Host + ":" + config.UM_Port + "/userlogin?username=" + loginUser.Username + "&password=" + loginUser.Password)
 
 		//check for response error of 500
 		if respErr != nil {
