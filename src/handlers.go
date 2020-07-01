@@ -796,6 +796,70 @@ func (s *Server) handleforgotpassword() http.HandlerFunc {
 
 }
 
+func (s *Server) handlegetscimid() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Handle get SCIM ID Has Been Called!")
+		userDetails := UserDetails{}
+		err := json.NewDecoder(r.Body).Decode(&userDetails)
+
+		//handle for bad JSON provided
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, err.Error())
+			fmt.Println("Improper registration details provided")
+			return
+		}
+
+		if userDetails.KeySecret != config.Key_Secret {
+			keyErrorByte, _ := json.Marshal("Resource accessed without the correct key and secret!")
+			w.WriteHeader(500)
+			w.Write(keyErrorByte)
+			fmt.Println("Resource accessed without the correct key and secret!")
+			return
+		}
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		// TODO: Set InsecureSkipVerify as config in environment.env
+		client1 := &http.Client{}
+
+		reqtoIS, err := http.NewRequest("GET", "https://"+config.IS_Host+":"+config.IS_Port+"/wso2/scim/Users?filter=userName+Eq+%22"+userDetails.Username+"%22", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		reqtoIS.SetBasicAuth("admin", "admin")
+		resp1, err := client1.Do(reqtoIS)
+
+		bodyText, err := ioutil.ReadAll(resp1.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var identityServerSCIMID IdentityServerSCIMID
+
+		err = json.Unmarshal(bodyText, &identityServerSCIMID)
+
+		if err != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, err.Error())
+			fmt.Println("Error occured in decoding SCIM ID response")
+			return
+		}
+
+		js, jserr := json.Marshal(identityServerSCIMID)
+		if jserr != nil {
+			w.WriteHeader(500)
+			fmt.Fprint(w, jserr.Error())
+			fmt.Println("Error occured when trying to marshal the user SCIM ID")
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		w.Write(js)
+		return
+
+	}
+
+}
+
 /* ========================================================================
 ===========================================================================
 =========================================================================*/
