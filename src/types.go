@@ -101,6 +101,23 @@ type LoginUser struct {
 	Password string `json:"password"`
 }
 
+type Resources struct {
+	ScimID string `json:"id"`
+}
+
+type IdentityServerSCIMID struct {
+	Resource []Resources `json:"Resources"`
+}
+
+type SCIMIDResult struct {
+	ScimID string `json:"scimid"`
+}
+
+type UserDetails struct {
+	Username  string `json:"username"`
+	KeySecret string `json:"keysecret"`
+}
+
 type Server struct {
 	router *mux.Router
 }
