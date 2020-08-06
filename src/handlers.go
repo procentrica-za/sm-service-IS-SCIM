@@ -39,7 +39,7 @@ func (s *Server) handleregisteruser() http.HandlerFunc {
 		client := &http.Client{}
 		var data = strings.NewReader(`{"schemas":[],"name":{"familyName":"` + regUser.Surname + `" ,"givenName":"` + regUser.Name + `"},"userName":"` + regUser.Username + `","password":"` + regUser.Password + `","emails":[{"primary":true,"value":"` + regUser.Email + `","type":"home"},{"value":"` + regUser.Email + `","type":"work"}]}`)
 
-		req, err := http.NewRequest("POST", "https://sm-wso2is-service:9445/wso2/scim/Users", data)
+		req, err := http.NewRequest("POST", "https://auth.studymoney.co.za:9445/wso2/scim/Users", data)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -143,7 +143,7 @@ func (s *Server) handleregisteruser() http.HandlerFunc {
 
 		if registerResponse.UserCreated == "false" {
 			client := &http.Client{}
-			req, err := http.NewRequest("DELETE", "https://sm-wso2is-service:9445/wso2/scim/Users/"+identityServerResponse.ID, nil)
+			req, err := http.NewRequest("DELETE", "https://auth.studymoney.co.za:9445/wso2/scim/Users/"+identityServerResponse.ID, nil)
 			if err != nil {
 				log.Fatal(err)
 			}
