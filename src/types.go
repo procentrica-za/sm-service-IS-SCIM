@@ -122,14 +122,14 @@ type Server struct {
 	router *mux.Router
 }
 type Config struct {
-	IS_Host         string
-	IS_Port         string
-	APIM_Host       string
-	APIM_Port       string
+	ISHost          string
+	ISPort          string
+	APIMHost        string
+	APIMPort        string
 	ListenServePort string
-	IS_Username     string
-	IS_Password     string
-	UM_Host         string
-	UM_Port         string
-	Key_Secret      string
+	ISUsername      string
+	ISPassword      string
+	UMHost          string
+	UMPort          string
+	KeySecret       string
 }

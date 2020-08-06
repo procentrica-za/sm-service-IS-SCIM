@@ -14,27 +14,27 @@ var config Config
 
 func init() {
 	config = CreateConfig()
-	fmt.Printf("IS_Host: %v\n", config.IS_Host)
-	fmt.Printf("IS_Port: %v\n", config.IS_Port)
-	fmt.Printf("APIM_Host: %v\n", config.IS_Host)
-	fmt.Printf("APIM_Port: %v\n", config.IS_Port)
+	fmt.Printf("IS_Host: %v\n", config.ISHost)
+	fmt.Printf("IS_Port: %v\n", config.ISPort)
+	fmt.Printf("APIM_Host: %v\n", config.APIMHost)
+	fmt.Printf("APIM_Port: %v\n", config.APIMPort)
 	fmt.Printf("Listening and Serving on Port: %v\n", config.ListenServePort)
-	fmt.Printf("UM_Host: %v\n", config.UM_Host)
-	fmt.Printf("UM_Port: %v\n", config.UM_Port)
+	fmt.Printf("UM_Host: %v\n", config.UMHost)
+	fmt.Printf("UM_Port: %v\n", config.UMPort)
 }
 
 func CreateConfig() Config {
 	conf := Config{
-		IS_Host:         os.Getenv("IS_HOST"),
-		IS_Port:         os.Getenv("IS_PORT"),
-		APIM_Host:       os.Getenv("APIM_HOST"),
-		APIM_Port:       os.Getenv("APIM_PORT"),
+		ISHost:          os.Getenv("IS_HOST"),
+		ISPort:          os.Getenv("IS_PORT"),
+		APIMHost:        os.Getenv("APIM_HOST"),
+		APIMPort:        os.Getenv("APIM_PORT"),
 		ListenServePort: os.Getenv("LISTEN_AND_SERVE_PORT"),
-		IS_Username:     os.Getenv("IS_USERNAME"),
-		IS_Password:     os.Getenv("IS_PASSWORD"),
-		UM_Host:         os.Getenv("UM_HOST"),
-		UM_Port:         os.Getenv("UM_PORT"),
-		Key_Secret:      os.Getenv("KEY_SECRET"),
+		ISUsername:      os.Getenv("IS_USERNAME"),
+		ISPassword:      os.Getenv("IS_PASSWORD"),
+		UMHost:          os.Getenv("UM_HOST"),
+		UMPort:          os.Getenv("UM_PORT"),
+		KeySecret:       os.Getenv("KEY_SECRET"),
 	}
 	return conf
 }

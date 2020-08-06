@@ -26,7 +26,7 @@ func (s *Server) handleregisteruser() http.HandlerFunc {
 			return
 		}
 
-		if regUser.KeySecret != config.Key_Secret {
+		if regUser.KeySecret != config.KeySecret {
 			keyErrorByte, _ := json.Marshal("Resource accessed without the correct key and secret!")
 			w.WriteHeader(500)
 			w.Write(keyErrorByte)
@@ -88,7 +88,7 @@ func (s *Server) handleregisteruser() http.HandlerFunc {
 		}
 
 		requestByte, _ := json.Marshal(regUser)
-		reqToUM, respErr := http.Post("http://"+config.UM_Host+":"+config.UM_Port+"/user", "application/json", bytes.NewBuffer(requestByte))
+		reqToUM, respErr := http.Post("http://"+config.UMHost+":"+config.UMPort+"/user", "application/json", bytes.NewBuffer(requestByte))
 
 		if respErr != nil {
 			w.WriteHeader(500)
