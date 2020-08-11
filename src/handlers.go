@@ -803,7 +803,7 @@ func (s *Server) handlegetscimid() http.HandlerFunc {
 		userDetails := UserDetails{}
 		err := json.NewDecoder(r.Body).Decode(&userDetails)
 
-		//handle for bad JSON provided
+		//handle for bad JSON provided.
 		if err != nil {
 			w.WriteHeader(500)
 			fmt.Fprint(w, err.Error())
