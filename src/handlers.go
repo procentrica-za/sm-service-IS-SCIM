@@ -118,6 +118,7 @@ func (s *Server) handleregisteruser() http.HandlerFunc {
 			return
 		}
 
+		//close the request
 		defer reqToUM.Body.Close()
 
 		var registerResponse RegisterUserResponse
