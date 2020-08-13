@@ -844,12 +844,13 @@ func (s *Server) handlegetscimid() http.HandlerFunc {
 			fmt.Println("Error occured in decoding SCIM ID response")
 			return
 		}
+		var scimIDResponse SCIMIDResponse
 
 		for i := 0; i < len(identityServerSCIMID.Resource); i++ {
-			fmt.Println("User ID: " + identityServerSCIMID.Resource[i].ScimID)
+			scimIDResponse.ID = identityServerSCIMID.Resource[i].ScimID
 		}
 
-		js, jserr := json.Marshal(identityServerSCIMID)
+		js, jserr := json.Marshal(scimIDResponse)
 		if jserr != nil {
 			w.WriteHeader(500)
 			fmt.Fprint(w, jserr.Error())
