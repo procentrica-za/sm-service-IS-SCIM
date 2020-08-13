@@ -845,6 +845,9 @@ func (s *Server) handlegetscimid() http.HandlerFunc {
 			return
 		}
 		fmt.Println(identityServerSCIMID)
+		newid := identityServerSCIMID[:len(identityServerSCIMID)-2]
+
+		fmt.Println(newid)
 		js, jserr := json.Marshal(identityServerSCIMID)
 		if jserr != nil {
 			w.WriteHeader(500)
