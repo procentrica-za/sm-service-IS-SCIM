@@ -845,9 +845,6 @@ func (s *Server) handlegetscimid() http.HandlerFunc {
 			return
 		}
 		fmt.Println(identityServerSCIMID)
-		newid := identityServerSCIMID[:len(identityServerSCIMID)-2]
-
-		fmt.Println(newid)
 		js, jserr := json.Marshal(identityServerSCIMID)
 		if jserr != nil {
 			w.WriteHeader(500)
@@ -855,6 +852,7 @@ func (s *Server) handlegetscimid() http.HandlerFunc {
 			fmt.Println("Error occured when trying to marshal the user SCIM ID")
 			return
 		}
+		fmt.Println(identityServerSCIMID)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
 		w.Write(js)
