@@ -113,6 +113,10 @@ type SCIMIDResult struct {
 	ScimID string `json:"scimid"`
 }
 
+type SCIMIDResponse struct {
+	ID string `json:"id"`
+}
+
 type UserDetails struct {
 	Username  string `json:"username"`
 	KeySecret string `json:"keysecret"`

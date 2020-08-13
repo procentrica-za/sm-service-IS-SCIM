@@ -845,6 +845,10 @@ func (s *Server) handlegetscimid() http.HandlerFunc {
 			return
 		}
 
+		for i := 0; i < len(identityServerSCIMID.Resource); i++ {
+			fmt.Println("User ID: " + identityServerSCIMID.Resource[i].ScimID)
+		}
+
 		js, jserr := json.Marshal(identityServerSCIMID)
 		if jserr != nil {
 			w.WriteHeader(500)
